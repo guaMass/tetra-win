@@ -7,12 +7,16 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
-find_package(Python3 COMPONENTS Interpreter REQUIRED)
+find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
 if(NOT DEFINED PYTHON_EXECUTABLE)
   set(PYTHON_EXECUTABLE "${Python3_EXECUTABLE}" CACHE FILEPATH "Python interpreter used to query PyTorch" FORCE)
 endif()
 
 find_package(Torch REQUIRED)
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 OLD)
+endif()
+
 find_package(CGAL REQUIRED)
 
 include(FetchContent)
