@@ -16,18 +16,9 @@ find_package(Torch REQUIRED)
 if(POLICY CMP0167)
   cmake_policy(SET CMP0167 OLD)
 endif()
-
 find_package(CGAL REQUIRED)
 
-include(FetchContent)
-FetchContent_Declare(
-  pybind11
-  GIT_REPOSITORY https://github.com/pybind/pybind11.git
-  GIT_TAG v2.11.1
-)
-FetchContent_MakeAvailable(pybind11)
-
-pybind11_add_module(tetranerf_cpp_extension
+Python3_add_library(tetranerf_cpp_extension MODULE WITH_SOABI
   src/triangulation.cpp
   src/py_binding.cpp
 )
@@ -38,10 +29,15 @@ target_link_libraries(tetranerf_cpp_extension
   PRIVATE
     CGAL::CGAL
     ${TORCH_LIBRARIES}
+    Python3::Module
 )
 
 if(TORCH_INCLUDE_DIRS)
   target_include_directories(tetranerf_cpp_extension PRIVATE ${TORCH_INCLUDE_DIRS})
+endif()
+
+if(TORCH_LIBRARY_DIRS)
+  target_link_directories(tetranerf_cpp_extension PRIVATE ${TORCH_LIBRARY_DIRS})
 endif()
 
 if(TORCH_COMPILE_OPTIONS)
@@ -52,6 +48,8 @@ if(TORCH_COMPILE_DEFINITIONS)
   target_compile_definitions(tetranerf_cpp_extension PRIVATE ${TORCH_COMPILE_DEFINITIONS})
 endif()
 
+target_compile_definitions(tetranerf_cpp_extension PRIVATE TORCH_EXTENSION_NAME=tetranerf_cpp_extension)
+
 if(MSVC)
   target_compile_options(tetranerf_cpp_extension PRIVATE /bigobj)
 else()
@@ -59,6 +57,7 @@ else()
 endif()
 
 set_target_properties(tetranerf_cpp_extension PROPERTIES
+  PREFIX ""
   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tetranerf/utils/extension"
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"

@@ -54,6 +54,22 @@ if(NOT TORCH_LIBRARIES)
   message(FATAL_ERROR "Torch was found, but no usable CMake targets were exported.")
 endif()
 
+# Torch::Python is not always exported on Windows conda builds, but
+# <torch/extension.h> requires symbols from torch_python.
+if(WIN32 AND NOT TARGET Torch::Python)
+  find_library(TORCH_PYTHON_LIBRARY
+    NAMES torch_python
+    PATHS ${TORCH_LIBRARY_DIRS}
+    NO_DEFAULT_PATH
+  )
+  if(TORCH_PYTHON_LIBRARY)
+    list(APPEND TORCH_LIBRARIES ${TORCH_PYTHON_LIBRARY})
+    message(STATUS "Using fallback torch_python library: ${TORCH_PYTHON_LIBRARY}")
+  else()
+    message(WARNING "Torch::Python target not found and torch_python library was not located in TORCH_LIBRARY_DIRS. Tensor pybind casters may fail to link.")
+  endif()
+endif()
+
 set(TORCH_COMPILE_OPTIONS)
 if(DEFINED TORCH_CXX_FLAGS AND NOT TORCH_CXX_FLAGS STREQUAL "")
   separate_arguments(_torch_cxx_flags NATIVE_COMMAND "${TORCH_CXX_FLAGS}")
